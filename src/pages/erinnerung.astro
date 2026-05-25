@@ -1,5 +1,5 @@
 ---
-import GBStartScreen from '../components/greybox/GBStartScreen.astro';
+import GBErinnerungSetzen from '../components/greybox/GBErinnerungSetzen.astro';
 ---
 
 <html lang="de">
@@ -9,9 +9,9 @@ import GBStartScreen from '../components/greybox/GBStartScreen.astro';
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <title>Greybox</title>
+    <title>Greybox – Erinnerung setzen</title>
   </head>
-  <body class="bg-(--gb-background) m-0 p-0">
-    <GBStartScreen href="/auswahl" />
+  <body class="m-0 p-0">
+    <GBErinnerungSetzen time="18:30" bestätigenHref="/bestaetigung" />
   </body>
 </html>

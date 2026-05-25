@@ -1,0 +1,113 @@
+---
+import '../../styles/global.css';
+
+interface Props {
+  defaultMinutes?: number;
+  defaultSeconds?: number;
+  nextHref?: string;
+}
+
+const { defaultMinutes = 5, defaultSeconds = 30, nextHref = '/session' } = Astro.props;
+---
+
+<div class="min-h-screen flex flex-col bg-(--gb-background) lg:bg-white">
+  <main class="flex-1 flex flex-col items-center justify-between pt-16 px-8 pb-12 lg:pt-13.25 lg:pb-13">
+
+    <div class="flex flex-col gap-5 text-center w-full max-w-89 lg:max-w-158.75">
+      <h2 class="text-black text-[1.9375rem] font-semibold leading-tight lg:text-[2.375rem]">
+        Wähle dein gewünschte Zeit aus
+      </h2>
+      <p class="text-(--gb-text-light) text-base leading-relaxed">
+        Für die ausgewählte Zeit wird ihr Gegenstand nicht nutzbar sein
+      </p>
+    </div>
+
+    <!-- Timer picker -->
+    <div class="flex items-center gap-8">
+
+      <!-- Minutes -->
+      <div class="flex flex-col items-center gap-3">
+        <button
+          id="min-up"
+          class="w-12 h-12 rounded-full bg-(--gb-primary-600) text-(--gb-surface) text-2xl font-bold flex items-center justify-center hover:bg-(--gb-primary-700) transition-colors active:scale-95 select-none"
+          aria-label="Minuten erhöhen"
+        >+</button>
+
+        <div class="flex flex-col items-center gap-1">
+          <span id="display-min" class="text-[3.5rem] font-semibold leading-none text-black tabular-nums w-24 text-center">
+            {String(defaultMinutes).padStart(2, '0')}
+          </span>
+          <span class="text-sm font-medium text-(--gb-text-light) uppercase tracking-widest">min</span>
+        </div>
+
+        <button
+          id="min-down"
+          class="w-12 h-12 rounded-full bg-(--gb-background) border-[1.5px] border-(--gb-border) text-(--gb-text) text-2xl font-bold flex items-center justify-center hover:bg-(--gb-border) transition-colors active:scale-95 select-none"
+          aria-label="Minuten verringern"
+        >−</button>
+      </div>
+
+      <!-- Divider -->
+      <span class="text-[3rem] font-semibold text-(--gb-text-light) leading-none mb-7">:</span>
+
+      <!-- Seconds -->
+      <div class="flex flex-col items-center gap-3">
+        <button
+          id="sek-up"
+          class="w-12 h-12 rounded-full bg-(--gb-primary-600) text-(--gb-surface) text-2xl font-bold flex items-center justify-center hover:bg-(--gb-primary-700) transition-colors active:scale-95 select-none"
+          aria-label="Sekunden erhöhen"
+        >+</button>
+
+        <div class="flex flex-col items-center gap-1">
+          <span id="display-sek" class="text-[3.5rem] font-semibold leading-none text-black tabular-nums w-24 text-center">
+            {String(defaultSeconds).padStart(2, '0')}
+          </span>
+          <span class="text-sm font-medium text-(--gb-text-light) uppercase tracking-widest">sek</span>
+        </div>
+
+        <button
+          id="sek-down"
+          class="w-12 h-12 rounded-full bg-(--gb-background) border-[1.5px] border-(--gb-border) text-(--gb-text) text-2xl font-bold flex items-center justify-center hover:bg-(--gb-border) transition-colors active:scale-95 select-none"
+          aria-label="Sekunden verringern"
+        >−</button>
+      </div>
+
+    </div>
+
+    <button
+      id="confirm-btn"
+      class="flex items-center justify-center h-13.25 w-full max-w-85.5 bg-(--gb-primary-600) rounded-(--gb-radius-lg) text-(--gb-background) font-medium text-base transition-colors hover:bg-(--gb-primary-700) lg:max-w-109.5 lg:text-xl"
+    >
+      Bestätigen
+    </button>
+
+  </main>
+
+
+</div>
+
+<script is:inline define:vars={{ defaultMinutes, defaultSeconds, nextHref }}>
+  let min = defaultMinutes;
+  let sek = defaultSeconds;
+
+  const minEl  = document.getElementById('display-min');
+  const sekEl  = document.getElementById('display-sek');
+  const btn    = document.getElementById('confirm-btn');
+
+  function clamp(val, lo, hi) { return Math.min(hi, Math.max(lo, val)); }
+
+  function render() {
+    minEl.textContent = String(min).padStart(2, '0');
+    sekEl.textContent = String(sek).padStart(2, '0');
+  }
+
+  document.getElementById('min-up').addEventListener('click',   () => { min = clamp(min + 1, 0, 99); render(); });
+  document.getElementById('min-down').addEventListener('click', () => { min = clamp(min - 1, 0, 99); render(); });
+  document.getElementById('sek-up').addEventListener('click',   () => { sek = clamp(sek + 1, 0, 59); render(); });
+  document.getElementById('sek-down').addEventListener('click', () => { sek = clamp(sek - 1, 0, 59); render(); });
+
+  btn.addEventListener('click', () => {
+    if (min === 0 && sek === 0) return;
+    window.location.href = `${nextHref}?min=${min}&sek=${sek}`;
+  });
+</script>

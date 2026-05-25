@@ -1,0 +1,291 @@
+---
+import '../../styles/global.css';
+
+interface Props {
+  bestätigenHref?: string;
+}
+
+const { bestätigenHref = '/bestaetigung' } = Astro.props;
+---
+
+<div class="min-h-screen flex flex-col bg-(--gb-background) lg:bg-white">
+  <main class="flex-1 flex flex-col items-center pt-16 px-8 pb-16 lg:pt-11">
+    <div class="flex flex-col items-center gap-8 w-full max-w-81.5 lg:max-w-111.5">
+
+      <h2 class="text-black text-[1.9375rem] font-semibold leading-tight text-center w-full lg:text-[2.375rem]">
+        Wähle die gewünschte Uhrzeit aus
+      </h2>
+
+      <!-- Mode pills -->
+      <div class="flex items-center gap-3 text-sm font-medium">
+        <button id="pill-hour" class="px-4 py-1.5 rounded-full transition-colors cursor-pointer">Stunde</button>
+        <span class="text-(--gb-text-light)">›</span>
+        <button id="pill-min"  class="px-4 py-1.5 rounded-full transition-colors cursor-pointer">Minute</button>
+      </div>
+
+      <!-- Clock face -->
+      <svg
+        id="clock-face"
+        viewBox="0 0 288 288"
+        class="w-72 h-72 cursor-pointer touch-none select-none"
+        aria-label="Uhrzeit wählen"
+      >
+        <circle cx="144" cy="144" r="140" fill="white" stroke="#d4dae3" stroke-width="1.5"/>
+        <g id="clock-numbers"></g>
+        <circle id="sel-circle" cx="144" cy="36" r="22" fill="#2563c9" opacity="0"/>
+        <line  id="clock-hand"  x1="144" y1="144" x2="144" y2="36"
+               stroke="#2563c9" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="144" cy="144" r="5" fill="#2563c9"/>
+      </svg>
+
+      <!-- AM / PM -->
+      <div class="flex gap-2 text-sm font-medium">
+        <button id="btn-am" class="px-5 py-1.5 rounded-full border-[1.5px] transition-colors">AM</button>
+        <button id="btn-pm" class="px-5 py-1.5 rounded-full border-[1.5px] transition-colors">PM</button>
+      </div>
+
+      <!-- Summary -->
+      <p id="time-summary" class="text-(--gb-text-light) text-base leading-relaxed text-center min-h-6.5">
+        Bitte wähle eine Uhrzeit aus
+      </p>
+
+      <!-- Confirm -->
+      <button
+        id="confirm-btn"
+        disabled
+        class="flex items-center justify-center h-13.25 w-full bg-(--gb-primary-600) rounded-(--gb-radius-lg) text-(--gb-background) font-medium text-base transition-all opacity-40 cursor-not-allowed"
+      >
+        Bestätigen
+      </button>
+
+    </div>
+  </main>
+</div>
+
+<script is:inline define:vars={{ bestätigenHref }}>
+(function () {
+  const CX = 144, CY = 144, R_NUM = 108, R_HAND = 108, R_SEL = 22;
+
+  let mode = 'hour';   // 'hour' | 'minute'
+  let selHour = null;  // 1–12
+  let selMin  = null;  // 0–59
+  let isPM    = false;
+  let dragging = false;
+
+  const face      = document.getElementById('clock-face');
+  const handEl    = document.getElementById('clock-hand');
+  const selCircle = document.getElementById('sel-circle');
+  const numbersG  = document.getElementById('clock-numbers');
+  const pillHour  = document.getElementById('pill-hour');
+  const pillMin   = document.getElementById('pill-min');
+  const summaryEl = document.getElementById('time-summary');
+  const confirmBtn = document.getElementById('confirm-btn');
+  const btnAM     = document.getElementById('btn-am');
+  const btnPM     = document.getElementById('btn-pm');
+
+  /* ── helpers ── */
+  function pt(angleDeg, r) {
+    const rad = (angleDeg - 90) * Math.PI / 180;
+    return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
+  }
+
+  function angleOf(clientX, clientY) {
+    const rect = face.getBoundingClientRect();
+    const scaleX = 288 / rect.width;
+    const scaleY = 288 / rect.height;
+    const dx = (clientX - rect.left) * scaleX - CX;
+    const dy = (clientY - rect.top)  * scaleY - CY;
+    return (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+  }
+
+  /* ── rendering ── */
+  function renderNumbers() {
+    numbersG.innerHTML = '';
+    const ns = 'http://www.w3.org/2000/svg';
+    if (mode === 'hour') {
+      for (let h = 1; h <= 12; h++) {
+        const a = h * 30;
+        const p = pt(a, R_NUM);
+        const selected = h === selHour;
+        const t = document.createElementNS(ns, 'text');
+        t.setAttribute('x', p.x);
+        t.setAttribute('y', p.y);
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('dominant-baseline', 'central');
+        t.setAttribute('font-size', '18');
+        t.setAttribute('font-weight', '600');
+        t.setAttribute('font-family', 'Inter, sans-serif');
+        t.setAttribute('fill', selected ? 'white' : '#16202e');
+        t.textContent = h;
+        numbersG.appendChild(t);
+      }
+    } else {
+      for (let m = 0; m < 60; m += 5) {
+        const a = m * 6;
+        const p = pt(a, R_NUM);
+        const nearestFive = selMin !== null ? Math.round(selMin / 5) * 5 % 60 : -1;
+        const selected = m === nearestFive;
+        const t = document.createElementNS(ns, 'text');
+        t.setAttribute('x', p.x);
+        t.setAttribute('y', p.y);
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('dominant-baseline', 'central');
+        t.setAttribute('font-size', '15');
+        t.setAttribute('font-weight', '600');
+        t.setAttribute('font-family', 'Inter, sans-serif');
+        t.setAttribute('fill', selected ? 'white' : '#16202e');
+        t.textContent = String(m).padStart(2, '0');
+        numbersG.appendChild(t);
+      }
+    }
+  }
+
+  function updateHand(angleDeg) {
+    const end = pt(angleDeg, R_HAND);
+    handEl.setAttribute('x2', end.x);
+    handEl.setAttribute('y2', end.y);
+    selCircle.setAttribute('cx', end.x);
+    selCircle.setAttribute('cy', end.y);
+    selCircle.setAttribute('opacity', '1');
+  }
+
+  function updatePills() {
+    const on  = 'background:#2563c9;color:white';
+    const off = 'background:#d4dae3;color:#5d6b7d';
+    pillHour.style.cssText = mode === 'hour' ? on : off;
+    pillMin.style.cssText  = mode === 'minute' ? on : off;
+  }
+
+  function updateAmPm() {
+    const on  = 'background:#2563c9;color:white;border-color:#2563c9';
+    const off = 'background:white;color:#16202e;border-color:#d4dae3';
+    btnAM.style.cssText = isPM ? off : on;
+    btnPM.style.cssText = isPM ? on  : off;
+  }
+
+  function updateSummary() {
+    if (selHour === null) {
+      summaryEl.innerHTML = 'Bitte wähle eine Uhrzeit aus';
+      return;
+    }
+    let h24 = isPM
+      ? (selHour === 12 ? 12 : selHour + 12)
+      : (selHour === 12 ? 0  : selHour);
+    const hh = String(h24).padStart(2, '0');
+    const mm = selMin !== null ? String(selMin).padStart(2, '0') : '– –';
+    summaryEl.innerHTML = `ich möchte um <strong style="font-weight:600">${hh}:${mm}</strong> Uhr erinnert werden`;
+  }
+
+  function updateConfirm() {
+    const ready = selHour !== null && selMin !== null;
+    confirmBtn.disabled = !ready;
+    confirmBtn.classList.toggle('opacity-40', !ready);
+    confirmBtn.classList.toggle('cursor-not-allowed', !ready);
+    confirmBtn.classList.toggle('hover:bg-[#1d4ea3]', ready);
+  }
+
+  /* ── interaction ── */
+  function handleMove(clientX, clientY) {
+    const angle = angleOf(clientX, clientY);
+    if (mode === 'hour') {
+      const h = Math.round(angle / 30) % 12 || 12;
+      selHour = h;
+      updateHand(h * 30);
+    } else {
+      const m = Math.round(angle / 6) % 60;
+      selMin = m;
+      updateHand(m * 6);
+    }
+    renderNumbers();
+    updateSummary();
+    updateConfirm();
+  }
+
+  function handleRelease(clientX, clientY) {
+    handleMove(clientX, clientY);
+    if (mode === 'hour') {
+      mode = 'minute';
+      selMin = null;
+      selCircle.setAttribute('opacity', '0');
+      handEl.setAttribute('x2', CX);
+      handEl.setAttribute('y2', CY - R_HAND);
+      updatePills();
+      renderNumbers();
+    }
+  }
+
+  face.addEventListener('mousedown', (e) => {
+    dragging = true;
+    handleMove(e.clientX, e.clientY);
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (dragging) handleMove(e.clientX, e.clientY);
+  });
+  document.addEventListener('mouseup', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    handleRelease(e.clientX, e.clientY);
+  });
+
+  face.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    dragging = true;
+    handleMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  document.addEventListener('touchmove', (e) => {
+    if (dragging) handleMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    const t = e.changedTouches[0];
+    handleRelease(t.clientX, t.clientY);
+  });
+
+  function switchMode(target) {
+    if (target === 'minute' && selHour === null) return; // can't go to minute without an hour
+    mode = target;
+    updatePills();
+    renderNumbers();
+    if (mode === 'hour') {
+      // restore hand to current hour position, or hide if none
+      if (selHour !== null) {
+        updateHand(selHour * 30);
+      } else {
+        selCircle.setAttribute('opacity', '0');
+        handEl.setAttribute('x2', CX);
+        handEl.setAttribute('y2', CY - R_HAND);
+      }
+    } else {
+      // restore hand to current minute position, or hide if none
+      if (selMin !== null) {
+        updateHand(selMin * 6);
+      } else {
+        selCircle.setAttribute('opacity', '0');
+        handEl.setAttribute('x2', CX);
+        handEl.setAttribute('y2', CY - R_HAND);
+      }
+    }
+  }
+
+  pillHour.addEventListener('click', () => switchMode('hour'));
+  pillMin.addEventListener('click',  () => switchMode('minute'));
+
+  btnAM.addEventListener('click', () => { isPM = false; updateAmPm(); updateSummary(); updateConfirm(); });
+  btnPM.addEventListener('click', () => { isPM = true;  updateAmPm(); updateSummary(); updateConfirm(); });
+
+  confirmBtn.addEventListener('click', () => {
+    if (selHour === null || selMin === null) return;
+    let h24 = isPM
+      ? (selHour === 12 ? 12 : selHour + 12)
+      : (selHour === 12 ? 0  : selHour);
+    const timeStr = `${String(h24).padStart(2,'0')}:${String(selMin).padStart(2,'0')}`;
+    window.location.href = `${bestätigenHref}?time=${encodeURIComponent(timeStr)}`;
+  });
+
+  /* ── init ── */
+  updatePills();
+  updateAmPm();
+  renderNumbers();
+})();
+</script>

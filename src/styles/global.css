@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+:root {
+  --gb-primary-600: #2563c9;
+  --gb-primary-700: #1d4ea3;
+  --gb-primary-100: #e4ecfb;
+  --gb-background:  #f6f7f9;
+  --gb-surface:     #ffffff;
+  --gb-text:        #16202e;
+  --gb-text-light:  #5d6b7d;
+  --gb-border:      #d4dae3;
+  --gb-signal-green:  #1f9d6b;
+  --gb-signal-orange: #ee8813;
+  --gb-signal-red:    #d33b3b;
+  --gb-radius-lg:   14px;
+  --gb-radius-md:   12px;
+}

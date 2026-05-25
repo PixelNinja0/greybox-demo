@@ -1,0 +1,32 @@
+---
+import '../../styles/global.css';
+
+interface Props {
+  href?: string;
+}
+
+const { href = '#' } = Astro.props;
+---
+
+<section
+  class="w-full min-h-[668px] bg-(--gb-primary-600) flex flex-col items-center justify-center px-8 py-16 lg:px-12 lg:py-20"
+>
+  <div class="flex flex-col items-center gap-8 w-full lg:gap-14">
+    <div class="flex flex-col items-center gap-8 w-full max-w-[320px] lg:max-w-[932px] lg:gap-12">
+      <h2
+        class="text-(--gb-surface) text-[1.9375rem] font-semibold leading-tight text-center w-full lg:text-[2.375rem]"
+      >
+        Greybox – It's time to change your future
+      </h2>
+      <p class="text-(--gb-background) text-base leading-relaxed text-center">
+        Hierbei handelt es sich um ein Prototyp
+      </p>
+    </div>
+    <a
+      href={href}
+      class="flex items-center justify-center h-[72px] w-full border-[1.5px] border-(--gb-border) rounded-(--gb-radius-lg) bg-transparent text-(--gb-surface) font-medium text-base transition-colors hover:bg-white/10 lg:w-88 lg:text-xl"
+    >
+      Klicke hier um zu Testen
+    </a>
+  </div>
+</section>

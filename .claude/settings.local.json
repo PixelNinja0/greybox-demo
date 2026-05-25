@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Figma__get_design_context",
+      "Bash(curl -sL \"https://www.figma.com/api/mcp/asset/c494dd95-6d00-435b-aeb6-e878a353d349\" -o \"c:/Users/liamd/Documents/Dev/greybox-demo/public/images/alarm-on.png\")"
+    ]
+  }
+}
